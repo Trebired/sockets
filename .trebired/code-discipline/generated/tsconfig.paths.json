@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "#15ff5qge6arb": [
+        "../../../scripts/verify/pack.mjs"
+      ],
+      "#6h1u157cu16y": [
+        "../../../src/server/guards.ts"
+      ],
+      "#96qidmummbix": [
+        "../../../src/server/connection.ts"
+      ],
+      "#auj1x4xecbf4": [
+        "../../../src/server/logging.ts"
+      ],
+      "#cyz66t9rvubv": [
+        "../../logger/config.ts"
+      ],
+      "#gqln86z3qxqx": [
+        "../../../src/server/index.ts"
+      ],
+      "#jeg7ap5rc8h6": [
+        "../../../src/server/types.ts"
+      ],
+      "#lt6qzhoo6iye": [
+        "../../../src/client/index.ts"
+      ],
+      "#nvm5xa3qaby8": [
+        "../../../src/server/rooms.ts"
+      ],
+      "#pq56xxwluhx9": [
+        "../../../src/index.ts"
+      ],
+      "#ptt0ze0zju0m": [
+        "../../../scripts/verify/rooms.mjs"
+      ],
+      "#qi9yziv3hbgf": [
+        "../../../src/server/channel.ts"
+      ],
+      "#qkhazf8njk4y": [
+        "../../../src/shared/protocol.ts"
+      ],
+      "#rwxisjd79eia": [
+        "../../../src/client/room.ts"
+      ],
+      "#tmq2yxp2ilw9": [
+        "../../../scripts/prepare-dist.mjs"
+      ],
+      "#ty4eghopwmck": [
+        "../../../scripts/verify/sockets.mjs"
+      ],
+      "#wl6ln5sdqwob": [
+        "../../../src/package-metadata.ts"
+      ]
+    }
+  }
+}

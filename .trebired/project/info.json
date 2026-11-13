@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "category": "package",
+  "subcategory": "runtime",
+  "status": "active",
+  "npm": "@trebired/sockets",
+  "description": {
+    "en": "Socket channels with permission-checked rooms for Bun applications and their clients.",
+    "cs": "Socketové kanály s místnostmi pod kontrolou oprávnění pro aplikace postavené na Bunu a jejich klienty."
+  }
+}
