@@ -1,8 +1,11 @@
 import { io, type ManagerOptions, type Socket, type SocketOptions } from "socket.io-client";
 import {
   CHANGE_EVENT,
+  DENIED_EVENT,
+  QUERY_CHANGED_EVENT,
   REQUEST_EVENT,
   SUBSCRIBE_EVENT,
+  SUBSCRIBED_EVENT,
   text,
   UNSUBSCRIBE_EVENT,
   type RoomChange,
@@ -57,7 +60,45 @@ function dispatchChange(listeners: Map<string, Set<RoomListener>>, change: RoomC
   });
 }
 
-function roomSubscriber(socket: Socket, listeners: Map<string, Set<RoomListener>>) {
+type SubscriptionState = {
+  confirmed: Set<string>;
+  waiters: Map<string, Set<()=>void>>;
+};
+
+function settleWaiters(state: SubscriptionState, room: string) {
+  const waiters = state.waiters.get(room);
+  state.waiters.delete(room);
+  waiters?.forEach((resolve) => resolve());
+}
+
+function trackSubscriptions(socket: Socket): SubscriptionState {
+  const state: SubscriptionState = { confirmed: new Set(), waiters: new Map() };
+  socket.on(SUBSCRIBED_EVENT, (payload: { room?: string }) => {
+      const room = text(payload && payload.room);
+      if (!room) return;
+      state.confirmed.add(room);
+      settleWaiters(state, room);
+  });
+  socket.on(DENIED_EVENT, (payload: { room?: string }) => settleWaiters(state, text(payload && payload.room)));
+  socket.on("disconnect", () => state.confirmed.clear());
+  return state;
+}
+
+function waitForSubscription(state: SubscriptionState, room: string, timeoutMs: number) {
+  if (state.confirmed.has(room)) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+      const done = () => {
+        globalThis.clearTimeout(timer);
+        state.waiters.get(room)?.delete(done);
+        resolve();
+      };
+      const timer = globalThis.setTimeout(done, Math.max(250, timeoutMs));
+      if (!state.waiters.has(room)) state.waiters.set(room, new Set());
+      state.waiters.get(room)!.add(done);
+  });
+}
+
+function roomSubscriber(socket: Socket, listeners: Map<string, Set<RoomListener>>, state: SubscriptionState) {
   return function subscribe(room: string, listener: RoomListener) {
     const key = text(room);
     if (!key || typeof listener !== "function") return () => {};
@@ -68,6 +109,7 @@ function roomSubscriber(socket: Socket, listeners: Map<string, Set<RoomListener>
       const bucket = listeners.get(key);
       if (!bucket || !bucket.delete(listener) || bucket.size) return;
       listeners.delete(key);
+      state.confirmed.delete(key);
       if (socket.connected) socket.emit(UNSUBSCRIBE_EVENT, { room: key });
     };
   };
@@ -81,6 +123,7 @@ function createChannelClient(namespace: string, options: ChannelClientOptions, o
       ...(options.socketOptions || {}),
   });
   const listeners = new Map<string, Set<RoomListener>>();
+  const subscriptions = trackSubscriptions(socket);
   const timeout = Number(options.ackTimeoutMs) || DEFAULT_ACK_TIMEOUT_MS;
   socket.on("connect", () => listeners.forEach((_bucket, room) => socket.emit(SUBSCRIBE_EVENT, { room })));
   socket.on(CHANGE_EVENT, (change: RoomChange) => dispatchChange(listeners, change));
@@ -99,11 +142,13 @@ function createChannelClient(namespace: string, options: ChannelClientOptions, o
       return () => void socket.off(event, handler);
     },
     async request(room, name, payload, timeoutMs) {
-      const reply = await emitWithAck<RoomReply>(socket, REQUEST_EVENT, { name, payload, room }, Number(timeoutMs) || timeout);
+      const wait = Number(timeoutMs) || timeout;
+      if (listeners.has(text(room))) await waitForSubscription(subscriptions, text(room), wait);
+      const reply = await emitWithAck<RoomReply>(socket, REQUEST_EVENT, { name, payload, room }, wait);
       return (reply && typeof reply === "object" ? reply : { error: "timeout", ok: false }) as RoomReply<any>;
     },
     socket: () => socket,
-    subscribe: roomSubscriber(socket, listeners),
+    subscribe: roomSubscriber(socket, listeners, subscriptions),
   };
 }
 
@@ -123,4 +168,5 @@ export { connectChannel };
 export { openRoom } from "./room.js";
 export type { OpenedRoom, OpenRoomOptions, RoomHandler } from "./room.js";
 export type { ChannelClient, ChannelClientOptions, RoomListener };
+export { QUERY_CHANGED_EVENT } from "#qkhazf8njk4y";
 export type { RoomChange, RoomReply } from "#qkhazf8njk4y";

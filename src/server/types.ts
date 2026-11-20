@@ -26,8 +26,15 @@ type ChannelServer = { of?: (namespace: string) => ChannelNamespace };
 
 type RoomRequestHandler = (socket: ChannelSocket, id: string, payload: unknown) => unknown;
 
+type RoomHandle = {
+  broadcast: (event: string, data?: unknown) => boolean;
+  id: string;
+  kind: string;
+  room: string;
+};
+
 type RoomDefinition = {
-  activate?: (id: string) => unknown;
+  activate?: (id: string, room: RoomHandle) => unknown;
   authorize: (socket: ChannelSocket, id: string) => unknown;
   requests?: Record<string, RoomRequestHandler>;
   snapshot?: (socket: ChannelSocket, id: string) => unknown;
@@ -76,6 +83,7 @@ export type {
   ChannelSocket,
   InboundHandler,
   RoomDefinition,
+  RoomHandle,
   RoomRequestHandler,
   SocketFilter,
   SocketGuard,

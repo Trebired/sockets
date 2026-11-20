@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveLogger } from "@package/logger-adapter";
 import { Server } from "socket.io";
+import { verifyQueryRoom } from "./query.mjs";
 import { verifyRooms } from "./rooms.mjs";
 
 const log = resolveLogger({ source: "@trebired/sockets" });
@@ -48,6 +49,7 @@ async function main() {
   const running = await startServer();
   try {
     await verifyRooms({ client, running, server, sessionGuard });
+    await verifyQueryRoom({ client, running, server, sessionGuard });
   } finally {
     running.io.close();
     running.http.close();

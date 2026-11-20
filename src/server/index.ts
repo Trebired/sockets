@@ -1,6 +1,8 @@
 export { broadcast, channelOf, createChannel, disconnectAll, reauthorizeAll } from "./channel.js";
 export { isLoopbackAddress, loopbackOnly } from "./guards.js";
-export { parseRoom, roomFor } from "#qkhazf8njk4y";
+export { parseRoom, QUERY_CHANGED_EVENT, roomFor } from "#qkhazf8njk4y";
+export { queryRoom } from "./query.js";
+export type { QueryFilter, QueryRenderContext, QueryReply, QueryRoomDefinition } from "./query.js";
 export type {
   Channel,
   ChannelContext,

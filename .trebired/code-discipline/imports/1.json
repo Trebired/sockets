@@ -6,6 +6,7 @@
   "#cyz66t9rvubv": "./.trebired/logger/config.ts",
   "#gqln86z3qxqx": "./src/server/index.ts",
   "#jeg7ap5rc8h6": "./src/server/types.ts",
+  "#kr4yj2d85fbk": "./src/server/query.ts",
   "#lt6qzhoo6iye": "./src/client/index.ts",
   "#nvm5xa3qaby8": "./src/server/rooms.ts",
   "#pq56xxwluhx9": "./src/index.ts",
@@ -15,5 +16,6 @@
   "#rwxisjd79eia": "./src/client/room.ts",
   "#tmq2yxp2ilw9": "./scripts/prepare-dist.mjs",
   "#ty4eghopwmck": "./scripts/verify/sockets.mjs",
+  "#uao7sxno20ba": "./scripts/verify/query.mjs",
   "#wl6ln5sdqwob": "./src/package-metadata.ts"
 }

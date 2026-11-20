@@ -22,6 +22,9 @@
       "#jeg7ap5rc8h6": [
         "../../../src/server/types.ts"
       ],
+      "#kr4yj2d85fbk": [
+        "../../../src/server/query.ts"
+      ],
       "#lt6qzhoo6iye": [
         "../../../src/client/index.ts"
       ],
@@ -48,6 +51,9 @@
       ],
       "#ty4eghopwmck": [
         "../../../scripts/verify/sockets.mjs"
+      ],
+      "#uao7sxno20ba": [
+        "../../../scripts/verify/query.mjs"
       ],
       "#wl6ln5sdqwob": [
         "../../../src/package-metadata.ts"

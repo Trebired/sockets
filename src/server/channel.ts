@@ -109,6 +109,7 @@ function createChannel(options: ChannelOptions): Channel {
   const guards = guardList(options && options.guard);
   const state = connectionState(options, namespace);
   const api = channelApi(state, guards);
+  state.rooms.publishWith((room, event, data) => api.broadcast(room, event, data));
   const channel: Channel = {
     ...api,
     defineRoom(kind: unknown, definition: RoomDefinition) {

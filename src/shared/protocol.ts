@@ -5,6 +5,7 @@ const SUBSCRIBED_EVENT = "subscribed";
 const DENIED_EVENT = "denied";
 const CHANGE_EVENT = "change";
 const SNAPSHOT_EVENT = "snapshot";
+const QUERY_CHANGED_EVENT = "query:changed";
 
 type RoomRef = {
   id: string;
@@ -45,6 +46,7 @@ export {
   CHANGE_EVENT,
   DENIED_EVENT,
   parseRoom,
+  QUERY_CHANGED_EVENT,
   REQUEST_EVENT,
   roomFor,
   SNAPSHOT_EVENT,

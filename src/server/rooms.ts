@@ -9,6 +9,7 @@ type RoomState = {
   logger: NormalizedLoggerAdapter;
   members: Map<string, Set<string>>;
   options: ChannelOptions;
+  publish: (room: string, event: string, data?: unknown) => boolean;
   socketRooms: Map<string, Set<string>>;
 };
 
@@ -50,7 +51,12 @@ function activateRoom(state: RoomState, room: RoomRef) {
   const activate = state.definitions.get(room.kind)?.activate;
   if (typeof activate !== "function") return;
   try {
-    const cleanup = activate(room.id);
+    const cleanup = activate(room.id, {
+        broadcast: (event: string, data?: unknown) => state.publish(room.room, event, data),
+        id: room.id,
+        kind: room.kind,
+        room: room.room,
+    });
     if (typeof cleanup === "function") state.cleanups.set(room.room, cleanup as() => void);
   } catch (error) {
     state.logger.warn("sockets.room", "room activation failed", { error: errorText(error), room: room.room });
@@ -125,6 +131,7 @@ function createRoomRegistry(options: ChannelOptions, logger: NormalizedLoggerAda
     logger,
     members: new Map(),
     options,
+    publish: () => false,
     socketRooms: new Map(),
   };
   return {
@@ -132,6 +139,9 @@ function createRoomRegistry(options: ChannelOptions, logger: NormalizedLoggerAda
     define: (kind: unknown, definition: RoomDefinition) => defineRoomKind(state, kind, definition),
     disconnected: (socket: ChannelSocket) => leaveAllRooms(state, socket),
     joined: (socket: ChannelSocket, room: RoomRef) => joinRoom(state, socket, room),
+    publishWith(publish: RoomState["publish"]) {
+      state.publish = publish;
+    },
     left: (socket: ChannelSocket, room: string) => leaveRoom(state, socket, room),
     request: (socket: ChannelSocket, room: RoomRef, name: string, payload: unknown) => roomRequest(state, socket, room, name, payload),
     roomsOf: (socket: ChannelSocket) => [...(state.socketRooms.get(socketKey(socket)) || [])],
