@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveLogger } from "@package/logger-adapter";
 import { Server } from "socket.io";
+import { verifyLive } from "./live.mjs";
 import { verifyQueryRoom } from "./query.mjs";
 import { verifyRooms } from "./rooms.mjs";
 
@@ -50,6 +51,7 @@ async function main() {
   try {
     await verifyRooms({ client, running, server, sessionGuard });
     await verifyQueryRoom({ client, running, server, sessionGuard });
+    await verifyLive({ client, running, server, sessionGuard });
   } finally {
     running.io.close();
     running.http.close();

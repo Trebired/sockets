@@ -10,11 +10,14 @@ export type {
   ChannelServer,
   ChannelSocket,
   InboundHandler,
+  PresenceOptions,
   RoomDefinition,
   RoomRequestHandler,
   SocketFilter,
   SocketGuard,
   SocketNext,
   SocketPrepare,
+  StateContext,
+  StateHandler,
 } from "./types.js";
-export type { RoomChange, RoomReply, RoomRef } from "#qkhazf8njk4y";
+export type { LiveReply, RoomChange, RoomReply, RoomRef } from "#qkhazf8njk4y";

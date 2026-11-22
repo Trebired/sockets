@@ -4,18 +4,23 @@ import {
   DENIED_EVENT,
   parseRoom,
   REQUEST_EVENT,
+  SEND_EVENT,
   SNAPSHOT_EVENT,
+  STATE_EVENT,
   SUBSCRIBE_EVENT,
   SUBSCRIBED_EVENT,
   text,
   UNSUBSCRIBE_EVENT,
 } from "#qkhazf8njk4y";
 import type { RoomRef } from "#qkhazf8njk4y";
+import { handleSend, handleState } from "./live.js";
+import type { LiveStore } from "./live.js";
 import type { RoomRegistry } from "./rooms.js";
 import type { ChannelOptions, ChannelSocket, InboundHandler } from "./types.js";
 
 type ConnectionState = {
   events: Map<string, InboundHandler>;
+  live: LiveStore;
   logger: NormalizedLoggerAdapter;
   namespace: string;
   options: ChannelOptions;
@@ -24,7 +29,16 @@ type ConnectionState = {
   sockets: Map<string, ChannelSocket>;
 };
 
-const RESERVED_EVENTS = new Set([SUBSCRIBE_EVENT, UNSUBSCRIBE_EVENT, REQUEST_EVENT, "disconnect", "disconnecting", "error"]);
+const RESERVED_EVENTS = new Set([
+    SUBSCRIBE_EVENT,
+    UNSUBSCRIBE_EVENT,
+    REQUEST_EVENT,
+    STATE_EVENT,
+    SEND_EVENT,
+    "disconnect",
+    "disconnecting",
+    "error",
+]);
 
 function objectOf(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
@@ -109,13 +123,18 @@ function bindConnection(state: ConnectionState, socket: ChannelSocket) {
   socket.on?.(SUBSCRIBE_EVENT, (payload: unknown) => handleSubscribe(state, socket, payload));
   socket.on?.(UNSUBSCRIBE_EVENT, (payload: unknown) => handleUnsubscribe(state, socket, payload));
   socket.on?.(REQUEST_EVENT, (payload: unknown, done: unknown) => handleRequest(state, socket, payload, done));
+  socket.on?.(STATE_EVENT, (payload: unknown, ack: unknown) => handleState(state.live, socket, payload, ack));
+  socket.on?.(SEND_EVENT, (payload: unknown, ack: unknown) => handleSend(state.live, socket, payload, ack));
   bindInbound(state, socket);
   socket.on?.("disconnect", () => {
       state.sockets.delete(text(socket.id));
       state.rooms.disconnected(socket);
+      state.live.values.delete(text(socket.id));
+      state.live.presence.disconnected(socket);
       if (typeof state.options.onDisconnect === "function") state.options.onDisconnect(socket);
   });
   if (typeof state.options.onConnection === "function") state.options.onConnection(socket);
+  state.live.presence.connected(socket);
 }
 
 export { bindConnection };

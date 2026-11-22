@@ -8,8 +8,8 @@
     }
   },
   "name": "@trebired/sockets",
-  "version": "0.2.0",
-  "description": "Socket channels for Trebired apps: one namespace per system with its own connection guard, rooms with permission checks, snapshots and requests, declared inbound events, and revocation, plus a client for browsers and Bun.",
+  "version": "0.3.0",
+  "description": "Socket channels for Trebired apps: one namespace per system with its own connection guard, rooms with permission checks, snapshots and requests, declared inbound events, live state, reliable events, presence, and revocation, plus a client for browsers and Bun.",
   "type": "module",
   "private": false,
   "license": "AGPL-3.0-only",

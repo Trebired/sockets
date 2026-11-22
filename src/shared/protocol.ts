@@ -6,6 +6,8 @@ const DENIED_EVENT = "denied";
 const CHANGE_EVENT = "change";
 const SNAPSHOT_EVENT = "snapshot";
 const QUERY_CHANGED_EVENT = "query:changed";
+const STATE_EVENT = "state";
+const SEND_EVENT = "send";
 
 type RoomRef = {
   id: string;
@@ -17,6 +19,11 @@ type RoomChange<T=unknown> = {
   data: T;
   event: string;
   room: string;
+};
+
+type LiveReply = {
+  error?: string;
+  ok: boolean;
 };
 
 type RoomReply<T=unknown> = {
@@ -49,10 +56,12 @@ export {
   QUERY_CHANGED_EVENT,
   REQUEST_EVENT,
   roomFor,
+  SEND_EVENT,
   SNAPSHOT_EVENT,
+  STATE_EVENT,
   SUBSCRIBE_EVENT,
   SUBSCRIBED_EVENT,
   text,
   UNSUBSCRIBE_EVENT,
 };
-export type { RoomChange, RoomReply, RoomRef };
+export type { LiveReply, RoomChange, RoomReply, RoomRef };

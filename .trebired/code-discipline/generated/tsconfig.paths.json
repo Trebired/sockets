@@ -7,11 +7,20 @@
       "#6h1u157cu16y": [
         "../../../src/server/guards.ts"
       ],
+      "#6tz3ph66fn68": [
+        "../../../scripts/verify/live.mjs"
+      ],
+      "#76w8cmi60a2n": [
+        "../../../src/client/live.ts"
+      ],
       "#96qidmummbix": [
         "../../../src/server/connection.ts"
       ],
       "#auj1x4xecbf4": [
         "../../../src/server/logging.ts"
+      ],
+      "#byo7sru7a588": [
+        "../../../src/server/live.ts"
       ],
       "#cyz66t9rvubv": [
         "../../logger/config.ts"

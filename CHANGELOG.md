@@ -4,6 +4,12 @@ All notable changes to `@trebired/sockets` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 0.3.0
+
+- Added live state. A channel's `state` option declares the keys a client may publish, with `:*` keys matching a prefix. The client's `publish(key, value)` sends a value only when it changed, `unpublish(key)` removes it, and every published key is sent again after a reconnect. The server keeps each socket's values, readable with `channel.stateOf(socket)`.
+- Added reliable events. The client's `send(event, payload)` queues an event for one of the channel's `events`, delivers it in order once the server acknowledges the finished handler, and keeps it through a disconnect. `pending()` counts what is still queued, and `outboxLimit` and `retryMs` tune the queue.
+- Added presence. A channel's `presence` option names each socket's identity and calls `online`, `offline` and, after `graceMs`, `lost`. `channel.present(id)` and `channel.presentIds()` read who is connected.
+
 ## 0.2.0
 
 - Added `queryRoom(definition)`, a room that serves a searchable, filtered, paged list. The client asks with the room's `query` request, the server keeps a short-lived snapshot per socket behind a cursor, renders each page item with `render` when given, and broadcasts `QUERY_CHANGED_EVENT` to the room when a watched `load` returns different items.

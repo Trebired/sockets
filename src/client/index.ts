@@ -11,12 +11,15 @@ import {
   type RoomChange,
   type RoomReply,
 } from "#qkhazf8njk4y";
+import { createOutbox, createPublisher } from "./live.js";
 
 type RoomListener = (change: RoomChange) => void;
 
 type ChannelClientOptions = {
   ackTimeoutMs?: number;
   auth?: Record<string, unknown>;
+  outboxLimit?: number;
+  retryMs?: number;
   shared?: boolean;
   socketOptions?: Partial<ManagerOptions&SocketOptions>;
   url?: string;
@@ -29,12 +32,19 @@ type ChannelClient = {
   emitAck: <T = unknown > (event: string, payload?: unknown, timeoutMs?: number) => Promise<T|null>;
   namespace: string;
   on: (event: string, handler: (...args: any[]) => void) => () => void;
+  pending: () => number;
+  publish: (key: string, value: unknown) => void;
+  published: () => string[];
   request: <T = unknown > (room: string, name: string, payload?: unknown, timeoutMs?: number) => Promise<RoomReply<T>>;
   socket: () => Socket;
+  send: (event: string, payload?: unknown) => Promise<boolean>;
   subscribe: (room: string, listener: RoomListener) => () => void;
+  unpublish: (key: string) => void;
 };
 
 const DEFAULT_ACK_TIMEOUT_MS = 8000;
+const DEFAULT_OUTBOX_LIMIT = 1000;
+const DEFAULT_RETRY_MS = 2000;
 const sharedClients = new Map<string, ChannelClient>();
 
 function emitWithAck<T>(socket: Socket, event: string, payload: unknown, timeoutMs: number) {
@@ -127,6 +137,14 @@ function createChannelClient(namespace: string, options: ChannelClientOptions, o
   const timeout = Number(options.ackTimeoutMs) || DEFAULT_ACK_TIMEOUT_MS;
   socket.on("connect", () => listeners.forEach((_bucket, room) => socket.emit(SUBSCRIBE_EVENT, { room })));
   socket.on(CHANGE_EVENT, (change: RoomChange) => dispatchChange(listeners, change));
+  const liveOptions = {
+    emitAck: emitWithAck,
+    outboxLimit: Number(options.outboxLimit) || DEFAULT_OUTBOX_LIMIT,
+    retryMs: Number(options.retryMs) || DEFAULT_RETRY_MS,
+    timeoutMs: timeout,
+  };
+  const publisher = createPublisher(socket, liveOptions);
+  const outbox = createOutbox(socket, liveOptions);
   return {
     close() {
       socket.close();
@@ -141,14 +159,19 @@ function createChannelClient(namespace: string, options: ChannelClientOptions, o
       socket.on(event, handler);
       return () => void socket.off(event, handler);
     },
+    pending: outbox.pending,
+    publish: publisher.publish,
+    published: publisher.published,
     async request(room, name, payload, timeoutMs) {
       const wait = Number(timeoutMs) || timeout;
       if (listeners.has(text(room))) await waitForSubscription(subscriptions, text(room), wait);
       const reply = await emitWithAck<RoomReply>(socket, REQUEST_EVENT, { name, payload, room }, wait);
       return (reply && typeof reply === "object" ? reply : { error: "timeout", ok: false }) as RoomReply<any>;
     },
+    send: outbox.send,
     socket: () => socket,
     subscribe: roomSubscriber(socket, listeners, subscriptions),
+    unpublish: publisher.unpublish,
   };
 }
 
@@ -169,4 +192,4 @@ export { openRoom } from "./room.js";
 export type { OpenedRoom, OpenRoomOptions, RoomHandler } from "./room.js";
 export type { ChannelClient, ChannelClientOptions, RoomListener };
 export { QUERY_CHANGED_EVENT } from "#qkhazf8njk4y";
-export type { RoomChange, RoomReply } from "#qkhazf8njk4y";
+export type { LiveReply, RoomChange, RoomReply } from "#qkhazf8njk4y";

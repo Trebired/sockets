@@ -65,6 +65,20 @@ A room kind belongs to exactly one channel; declaring it on a second channel is 
 
 `events` declares the client-to-server events a channel accepts, such as an agent pushing samples or a terminal sending input. A handler receives the socket, the payload and the acknowledgement callback when the client asked for one. Any other event is ignored and logged.
 
+### Live state
+
+`state` declares the keys a client may publish, each with a handler `(socket, value, { key, previous, removed, state })`. A key ending in `:*`, such as `runtime:*`, matches every key with that prefix. The server keeps each socket's current values, readable with `channel.stateOf(socket)`, and drops them when the socket disconnects.
+
+On the client, `publish(key, value)` sends a value only when it differs from the last one the server accepted, and `unpublish(key)` removes it. After a reconnect the client sends every published key again, so the server always holds the client's current state without a separate snapshot step. A value the server did not accept is retried.
+
+### Reliable events
+
+`send(event, payload)` on the client queues an event for one of the channel's declared `events`. Events go out one at a time in order, each waiting for the server's acknowledgement, which the server gives once the handler has finished. Events queued while disconnected are delivered after the reconnect. The returned promise resolves `true` once the event is delivered, or `false` when the server does not know the event or the queue had to drop it (`outboxLimit`, 1000 by default). `emit` stays the fire-and-forget path for streams where a lost sample does not matter.
+
+### Presence
+
+`presence` tracks who is connected to a channel. `key(socket)` names the socket's identity, such as a user or a server. `online(id, socket)` runs when the first socket for an id connects, `offline(id)` when the last one disconnects, and `lost(id)` when it is still gone after `graceMs`. `channel.present(id)` and `channel.presentIds()` read the current set.
+
 ### Revocation
 
 Permissions change while sockets stay open. `channel.reauthorize(filter, prepare)` runs `prepare(socket)` first, for refreshing the viewer the room checks read, then runs `authorize` again for every room the matching sockets hold and drops each one that now fails, telling the client with `denied`. `reauthorizeAll(filter, prepare)` and `disconnectAll(filter)` do the same across every channel. The application calls them on sign-out, suspension and role changes.
@@ -109,5 +123,5 @@ This package does not:
 - provide a shared namespace for every system
 - decide who a socket is; the guard does
 - decide who may watch a room; the room's `authorize` does
-- store history, queue missed events or replay them after a reconnect
+- store history or replay room changes a client missed while disconnected
 - render anything

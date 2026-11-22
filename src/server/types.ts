@@ -48,6 +48,23 @@ type ChannelContext = {
   socket: ChannelSocket;
 };
 
+type StateContext = {
+  key: string;
+  previous: unknown;
+  removed: boolean;
+  state: Record<string, unknown>;
+};
+
+type StateHandler = (socket: ChannelSocket, value: unknown, context: StateContext) => unknown;
+
+type PresenceOptions = {
+  graceMs?: number;
+  key: (socket: ChannelSocket) => unknown;
+  lost?: (id: string) => unknown;
+  offline?: (id: string) => unknown;
+  online?: (id: string, socket: ChannelSocket) => unknown;
+};
+
 type ChannelOptions = {
   events?: Record<string, InboundHandler>;
   guard: SocketGuard | readonly SocketGuard[];
@@ -55,7 +72,9 @@ type ChannelOptions = {
   namespace: string;
   onConnection?: (socket: ChannelSocket) => unknown;
   onDisconnect?: (socket: ChannelSocket) => unknown;
+  presence?: PresenceOptions;
   rooms?: Record<string, RoomDefinition>;
+  state?: Record<string, StateHandler>;
   withContext?: (context: ChannelContext, run: () => Promise<unknown>) => unknown;
 };
 
@@ -69,9 +88,12 @@ type Channel = {
   disconnect: (filter?: SocketFilter) => number;
   namespace: string;
   on: (event: unknown, handler: InboundHandler) => boolean;
+  present: (id: unknown) => boolean;
+  presentIds: () => string[];
   reauthorize: (filter?: SocketFilter, prepare?: SocketPrepare) => Promise<number>;
   room: (kind: unknown, id: unknown) => string;
   sockets: () => ChannelSocket[];
+  stateOf: (socket: ChannelSocket) => Record<string, unknown>;
 };
 
 export type {
@@ -82,6 +104,7 @@ export type {
   ChannelServer,
   ChannelSocket,
   InboundHandler,
+  PresenceOptions,
   RoomDefinition,
   RoomHandle,
   RoomRequestHandler,
@@ -89,4 +112,6 @@ export type {
   SocketGuard,
   SocketNext,
   SocketPrepare,
+  StateContext,
+  StateHandler,
 };

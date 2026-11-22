@@ -1,6 +1,7 @@
 import { CHANGE_EVENT, DENIED_EVENT, parseRoom, roomFor, text } from "#qkhazf8njk4y";
 import { bindConnection, type ConnectionState } from "./connection.js";
 import { runGuards } from "./guards.js";
+import { createPresenceTracker, stateOf } from "./live.js";
 import { socketsLog } from "./logging.js";
 import { createRoomRegistry } from "./rooms.js";
 import type {
@@ -33,8 +34,18 @@ function normalizeNamespace(value: unknown) {
 
 function connectionState(options: ChannelOptions, namespace: string): ConnectionState {
   const logger = socketsLog(options.logger);
+  const events = new Map(Object.entries(options.events || {}));
   return {
-    events: new Map(Object.entries(options.events || {})),
+    events,
+    live: {
+      events,
+      handlers: new Map(Object.entries(options.state || {})),
+      logger,
+      namespace,
+      options,
+      presence: createPresenceTracker(options.presence, logger),
+      values: new Map(),
+    },
     logger,
     namespace,
     options,
@@ -91,6 +102,8 @@ function channelApi(state: ConnectionState, guards: SocketGuard[]) {
       state.events.set(name, handler);
       return true;
     },
+    present: (id: unknown) => state.live.presence.present(id),
+    presentIds: () => state.live.presence.ids(),
     async reauthorize(filter?: SocketFilter, prepare?: SocketPrepare) {
       let dropped = 0;
       for (const socket of matching(state, filter)) {
@@ -101,6 +114,7 @@ function channelApi(state: ConnectionState, guards: SocketGuard[]) {
     },
     room: (kind: unknown, id: unknown) => roomFor(kind, id),
     sockets: () => [...state.sockets.values()],
+    stateOf: (socket: ChannelSocket) => stateOf(state.live, socket),
   };
 }
 
